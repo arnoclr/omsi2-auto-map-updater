@@ -61,9 +61,18 @@ if __name__ == "__main__":
         # download new file version
         print('Download is starting ...')
         blob.download_to_filename(steamapps_folder)
-        with zipfile.ZipFile(steamapps_folder,"r") as zip_ref:
-            print('Extract zip in OMSI folder')
-            zip_ref.extractall(omsi_folder)
+
+        # extract archive
+        print('Extract zip in OMSI folder')
+        with zipfile.ZipFile(steamapps_folder, 'r') as zipObj:
+            # Get a list of all archived file names from the zip
+            listOfFileNames = zipObj.namelist()
+            # Iterate over the file names
+            for fileName in listOfFileNames:
+                #check the excluding file condition.
+                if fileName is 'OMSI2_mlv_auto_update.exe':
+                    continue
+                zipObj.extract(fileName, omsi_folder)
         os.remove(steamapps_folder)
         logEvent(action = "map_update")
     else:
