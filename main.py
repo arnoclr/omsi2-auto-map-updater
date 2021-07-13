@@ -20,6 +20,7 @@ if __name__ == "__main__":
     startup_folder = os.path.join(appdata, "Microsoft\Windows\Start Menu\Programs\Startup")
     startup_exe = os.path.join(startup_folder, exe_name)
     if os.path.exists(exe_location) and exe_location != startup_exe:
+        print('Copy installer in startup folder')
         copyfile(exe_location, startup_exe)
 
     # const
@@ -44,14 +45,21 @@ if __name__ == "__main__":
 
     # compare 2 hash
     if hash_from_gcs != hash_from_file:
+        print('New version available')
+
         # write new hash in file
         hash_file.seek(0)
         hash_file.write(hash_from_gcs)
         hash_file.truncate()
 
         # download new file version
+        print('Download is starting ...')
         blob.download_to_filename(steamapps_folder)
         with zipfile.ZipFile(steamapps_folder,"r") as zip_ref:
+            print('Extract zip in OMSI folder')
             zip_ref.extractall(omsi_folder)
         os.remove(steamapps_folder)
+    else:
+        print('Map is already up to date')
     hash_file.close()
+    print('Close installer')
