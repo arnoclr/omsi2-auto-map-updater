@@ -46,6 +46,7 @@ if __name__ == "__main__":
     if not os.path.exists(filename):
         f = open(filename, 'w')
         f.close()
+
     hash_file = open(filename, "r+")
     hash_from_file = hash_file.readline()
 
@@ -69,14 +70,18 @@ if __name__ == "__main__":
             listOfFileNames = zipObj.namelist()
             # Iterate over the file names
             for fileName in listOfFileNames:
-                #check the excluding file condition.
-                if fileName == 'plugins/OMSI2_mlv_auto_update.exe':
-                    continue
-                zipObj.extract(fileName, omsi_folder)
+                # try to extract
+                try:
+                    zipObj.extract(fileName, omsi_folder)
+                except:
+                    print('! unable to extract {}'.format(fileName))
+
         os.remove(steamapps_folder)
         logEvent(action = "map_update")
+
     else:
         print('Map is already up to date')
         logEvent(action = "map_up_to_date")
+
     hash_file.close()
     print('Close installer')
