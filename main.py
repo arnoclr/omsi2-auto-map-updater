@@ -11,6 +11,9 @@ def resource_path(relative_path):
     return os.path.join(os.path.abspath("."), relative_path)
 
 if __name__ == "__main__":
+    print("(c) omsistuff 2021")
+    print("Auto map updater (Marne la Vallée)")
+
     # self copy in startup folder
     current_path = os.path.abspath(os.getcwd())
     appdata = os.getenv('APPDATA')
@@ -24,9 +27,9 @@ if __name__ == "__main__":
         copyfile(exe_location, startup_exe)
 
     # const
-    filename = 'mlv.md5'
     steamapps_folder = r"C:\Program Files (x86)\Steam\steamapps\common\tmp.zip"
     omsi_folder = r"C:\Program Files (x86)\Steam\steamapps\common\OMSI 2"
+    filename = os.path.join(omsi_folder, "mlv.md5")
 
     # create instance of gcs
     storage_client = storage.Client.from_service_account_json(resource_path('credentials.json'))
