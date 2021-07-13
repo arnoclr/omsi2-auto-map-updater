@@ -70,7 +70,7 @@ if __name__ == "__main__":
             # Iterate over the file names
             for fileName in listOfFileNames:
                 #check the excluding file condition.
-                if fileName is 'plugins/OMSI2_mlv_auto_update.exe':
+                if fileName == 'plugins/OMSI2_mlv_auto_update.exe':
                     continue
                 zipObj.extract(fileName, omsi_folder)
         os.remove(steamapps_folder)
