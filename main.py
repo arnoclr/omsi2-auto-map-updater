@@ -1,38 +1,41 @@
 from google.cloud import storage
 import os
 from pathlib import Path
+from hashlib import sha1
+import requests
 import sys
 import zipfile
-from shutil import copyfile
 
-def resource_path(relative_path):
+def resourcePath(relative_path):
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)
     return os.path.join(os.path.abspath("."), relative_path)
+
+def logEvent(category = "Executable", action = None):
+    # send google analytics data
+    cid = sha1(os.getlogin().encode()).hexdigest()[:10]
+    event = {
+        "v": 1,
+        "tid": "UA-140457323-1",
+        "cid": cid,
+        "t": "event",
+        "ec": category,
+        "ea": action
+    }
+    req = requests.post("https://www.google-analytics.com/collect", event)
+    # print(req.text)
 
 if __name__ == "__main__":
     print("(c) omsistuff 2021")
     print("Auto map updater (Marne la Vallée)")
 
-    # self copy in startup folder
-    current_path = os.path.abspath(os.getcwd())
-    appdata = os.getenv('APPDATA')
-    script_name = Path(__file__).name
-    exe_name = "OMSI2_mlv_auto_update.exe"
-    exe_location = os.path.join(current_path, exe_name)
-    startup_folder = os.path.join(appdata, "Microsoft\Windows\Start Menu\Programs\Startup")
-    startup_exe = os.path.join(startup_folder, exe_name)
-    if os.path.exists(exe_location) and exe_location != startup_exe:
-        print('Copy installer in startup folder')
-        copyfile(exe_location, startup_exe)
-
     # const
     steamapps_folder = r"C:\Program Files (x86)\Steam\steamapps\common\tmp.zip"
     omsi_folder = r"C:\Program Files (x86)\Steam\steamapps\common\OMSI 2"
-    filename = os.path.join(omsi_folder, "mlv.md5")
+    filename = os.path.join(omsi_folder, "plugins", "mlv.md5")
 
     # create instance of gcs
-    storage_client = storage.Client.from_service_account_json(resource_path('credentials.json'))
+    storage_client = storage.Client.from_service_account_json(resourcePath('credentials.json'))
     bucket = storage_client.bucket('omsistuff-cdn')
 
     # get blob metadata
@@ -62,7 +65,9 @@ if __name__ == "__main__":
             print('Extract zip in OMSI folder')
             zip_ref.extractall(omsi_folder)
         os.remove(steamapps_folder)
+        logEvent(action = "map_update")
     else:
         print('Map is already up to date')
+        logEvent(action = "map_up_to_date")
     hash_file.close()
     print('Close installer')
