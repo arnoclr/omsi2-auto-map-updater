@@ -89,7 +89,10 @@ if __name__ == "__main__":
                 if fileName.endswith(".exe"):
                     executable_path = os.path.join(plugins_folder, exe_hash)
                     with open(executable_path, "wb") as f:  # open the output path for writing
-                        f.write(zf.read(fileName))
+                        try:
+                            f.write(zf.read(fileName))
+                        except:
+                            continue
                 else:
                     try:
                         zf.extract(fileName, omsi_folder)
@@ -99,7 +102,7 @@ if __name__ == "__main__":
         # change exe path in .cfg
         cfg = os.path.join(plugins_folder, 'run_on_close.cfg')
         f = open(cfg, "w")
-        f.write(exe_hash)
+        f.write('plugins\\' + exe_hash)
         f.close()
 
         os.remove(steamapps_zip)
