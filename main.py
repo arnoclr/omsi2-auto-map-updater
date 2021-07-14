@@ -1,5 +1,6 @@
 from google.cloud import storage
 import os
+from tqdm import tqdm
 from pathlib import Path
 from hashlib import sha1
 import requests
@@ -30,9 +31,9 @@ if __name__ == "__main__":
     print("Auto map updater (Marne la Vallée)")
 
     # const
-    steamapps_folder = r"C:\Program Files (x86)\Steam\steamapps\common\tmp.zip"
+    steamapps_zip = r"C:\Program Files (x86)\Steam\steamapps\common\tmp.zip"
     omsi_folder = r"C:\Program Files (x86)\Steam\steamapps\common\OMSI 2"
-    filename = os.path.join(omsi_folder, "plugins", "mlv.md5")
+    filename = os.path.join(omsi_folder, "plugins", "ga.omsistuff.maps.mlv.md5")
 
     # create instance of gcs
     storage_client = storage.Client.from_service_account_json(resourcePath('credentials.json'))
@@ -61,22 +62,47 @@ if __name__ == "__main__":
 
         # download new file version
         print('Download is starting ...')
-        blob.download_to_filename(steamapps_folder)
+        with open(steamapps_zip, 'wb') as f:
+            with tqdm.wrapattr(f, "write", total=blob.size) as file_obj:
+                storage_client.download_blob_to_file(blob, file_obj)
+
+        # self update exe
+        # delete all exe file that no currently running
+        plugins_folder = os.path.join(omsi_folder, 'plugins')
+        plugins_files = os.listdir(plugins_folder)
+        for item in plugins_files:
+            if item.endswith(".exe"):
+                try:
+                    os.remove(os.path.join(plugins_folder, item))
+                except:
+                    continue
 
         # extract archive
         print('Extract zip in OMSI folder')
-        with zipfile.ZipFile(steamapps_folder, 'r') as zipObj:
+        exe_hash = 'ga.omsistuff.maps.updater.' + hash_from_gcs[:5] + '.exe'
+        with zipfile.ZipFile(steamapps_zip, 'r') as zf:
             # Get a list of all archived file names from the zip
-            listOfFileNames = zipObj.namelist()
+            listOfFileNames = zf.namelist()
             # Iterate over the file names
             for fileName in listOfFileNames:
                 # try to extract
-                try:
-                    zipObj.extract(fileName, omsi_folder)
-                except:
-                    print('! unable to extract {}'.format(fileName))
+                if fileName.endswith(".exe"):
+                    executable_path = os.path.join(plugins_folder, exe_hash)
+                    with open(executable_path, "wb") as f:  # open the output path for writing
+                        f.write(zf.read(fileName))
+                else:
+                    try:
+                        zf.extract(fileName, omsi_folder)
+                    except:
+                        print('! unable to extract {}'.format(fileName))
 
-        os.remove(steamapps_folder)
+        # change exe path in .cfg
+        cfg = os.path.join(plugins_folder, 'run_on_close.cfg')
+        f = open(cfg, "w")
+        f.write(exe_hash)
+        f.close()
+
+        os.remove(steamapps_zip)
         logEvent(action = "map_update")
 
     else:
